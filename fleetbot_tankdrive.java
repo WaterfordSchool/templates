@@ -1,13 +1,11 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2017-2018 FIRST.ll Rights Reserved.                        */
-/* Open Source Software - may be modified and shared by FRC teams. The code   */
-/* must be accompanied by the FIRST BSD license file in the root directory of */
-/* the project.                                                               */
+/* Simple tankdrive program to run fleetbots                                  */
 /*----------------------------------------------------------------------------*/
 
+/* Team number must match team number in Driver Station, on RoboRio, and on Radio*/
 package org.usfirst.frc.team3245.robot;
 
-
+/* Imported functions from wpi libraries */
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
@@ -18,11 +16,8 @@ import edu.wpi.first.wpilibj.buttons.JoystickButton;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 /**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the IterativeRobot
- * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the build.properties file in the
- * project.
+Instantiate motor controllers, speed controller groups, differential drive systems, 
+and controllers here
  */
 
 public class Robot extends IterativeRobot {
@@ -35,7 +30,7 @@ public class Robot extends IterativeRobot {
 	SpeedControllerGroup rightDrive = new SpeedControllerGroup (rightDrive3, rightDrive4);
 	DifferentialDrive tDrive = new DifferentialDrive (leftDrive, rightDrive);
 	
-  Joystick drivercontroller = new Joystick (0);
+  	Joystick drivercontroller = new Joystick (0);
 	
   
 	/**
@@ -49,15 +44,8 @@ public class Robot extends IterativeRobot {
 
 
 	/**
-	 * This autonomous (along with the chooser code above) shows how to select
-	 * between different autonomous modes using the dashboard. The sendable
-	 * chooser code works with the Java SmartDashboard. If you prefer the
-	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
-	 * getString line to get the auto name from the text box below the Gyro
-	 *
-	 * <p>You can add additional auto modes by adding additional comparisons to
-	 * the switch structure below with additional strings. If using the
-	 * SendableChooser make sure to add them to the chooser code above as well.
+	 * This function sets up which Autonomous Mode the robot will use.
+	 * This is left blank for basic fleetbot operations as we won't be running auto.
 	 */
 	@Override
 	public void autonomousInit() {
@@ -67,6 +55,7 @@ public class Robot extends IterativeRobot {
 
 	/**
 	 * This function is called periodically during autonomous.
+	 * Again, this is left blank for fleetbot operations. 
 	 */
 	@Override
 	public void autonomousPeriodic() {
@@ -76,16 +65,19 @@ public class Robot extends IterativeRobot {
 
 	/**
 	 * This function is called periodically during operator control.
+	 * This is where we tell the fleetbot motors what percent speed to operate
+	 * based on input from the driver's controller.
 	 */
 	@Override
 	public void teleopPeriodic() {
-	  leftMotorSpeed = -drivercontroller.getY();
-    rightMotorSpeed = -drivercontroller.getAxis(AxisType.kThrottle);
-    tDrive.tankDrive(leftMotorSpeed * 1.0, rightMotorSpeed * 1.0);
+		leftMotorSpeed = -drivercontroller.getY();
+		rightMotorSpeed = -drivercontroller.getAxis(AxisType.kThrottle);
+		tDrive.tankDrive(leftMotorSpeed * 1.0, rightMotorSpeed * 1.0);
 	}
 
 	/**
 	 * This function is called periodically during test mode.
+	 * Again, this is left blank for fleetbot operations.
 	 */
 	@Override
 	public void testPeriodic() {
