@@ -10,7 +10,7 @@ package org.usfirst.frc.team3245.robot;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.Talon;
+//import edu.wpi.first.wpilibj.Talon;
 
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -26,16 +26,15 @@ public class Robot extends IterativeRobot {
 	private DifferentialDrive m_myRobot;
 	private Joystick m_driver;
 	private WPI_TalonSRX leftMotor;
-	//Talon leftMotor;
+	//private Talon leftMotor;
 	private WPI_TalonSRX rightMotor;
-	//Talon rightMotor;
+	//private Talon rightMotor;
 
 	private static final String kDefaultAuto = "Default";
-	private static final String kCustomAuto = "My Auto";
 	private static final String kDriveStraight = "Drive Straight";
 	
 	public double leftSpeed = 0;
-	public double rightSpeed;
+	public double rightSpeed = 0;
 	
 	public int leftEncoderPos = 0;
 	public int rightEncoderPos = 0;
@@ -51,8 +50,8 @@ public class Robot extends IterativeRobot {
 		leftMotor.setInverted(false);
 		leftMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 		leftMotor.setSensorPhase(true);
-		//leftMotor.setSafetyEnabled(false);
-		System.out.println(leftMotor.isSafetyEnabled());
+		leftMotor.setSafetyEnabled(false);
+		System.out.println("Left Motor Safety is set to " + leftMotor.isSafetyEnabled());
 		
 		//Right Drive Motor Initialization
 		rightMotor = new WPI_TalonSRX(2);
@@ -60,29 +59,29 @@ public class Robot extends IterativeRobot {
 		rightMotor.setInverted(true);
 		rightMotor.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative);
 		rightMotor.setSensorPhase(true);
-		//rightMotor.setSafetyEnabled(false);
-		System.out.println(rightMotor.isSafetyEnabled());
+		rightMotor.setSafetyEnabled(false);
+		System.out.println("Right Motor Safety is set to " + rightMotor.isSafetyEnabled());
 
 		//Drive Train Initialization
 		m_myRobot = new DifferentialDrive(leftMotor, rightMotor);
 		m_myRobot.setExpiration(0.1);
+		m_myRobot.setSafetyEnabled(false);
 		
 		//Joystick Initialization
 		m_driver = new Joystick(0);
 		
 		//Smart Dashboard Initialization
 		m_chooser.addDefault("Default Auto", kDefaultAuto);
-		m_chooser.addObject("My Auto", kCustomAuto);
 		m_chooser.addObject("Drive Straight", kDriveStraight);
 		SmartDashboard.putData("Auto modes", m_chooser);
-
 
 	}
 
 	@Override
 	public void autonomousInit() {
+		m_myRobot.tankDrive(0.0, 0.0);
 		encoderReset();
-		aveEncoderPos = 0;
+		updateEncoders();
 		
 		String autoSelected = m_chooser.getSelected();
 		//String autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
@@ -91,41 +90,27 @@ public class Robot extends IterativeRobot {
 		// MotorSafety improves safety when motors are updated in loops
 		// but is disabled here because motor updates are not looped in
 		// this autonomous mode.
-		m_myRobot.setSafetyEnabled(false);
+		//m_myRobot.setSafetyEnabled(false);
 		System.out.println(leftMotor.isSafetyEnabled());
 		
-		
-		
 		switch (autoSelected) {
-			case kCustomAuto:
-				// Spin at half speed for two seconds
-				m_myRobot.tankDrive(0.0, 0.5);
-				Timer.delay(2.0);
-
-				// Stop robot
-				m_myRobot.tankDrive(0.0, 0.0);
-				break;
 			case kDriveStraight:
-				// Drive forward while average encoder position is less than 10000
+				// Drive forward while average encoder position is less than 1000
 				encoderReset();
 				aveEncoderPos = 0;
 				m_myRobot.tankDrive(0.0, 0.0);
 
 				while(aveEncoderPos <= 1000) {
 					m_myRobot.tankDrive(0.5, -0.5);
-					aveEncoderPos = (-leftMotor.getSelectedSensorPosition() + -rightMotor.getSelectedSensorPosition())/2;
-					SmartDashboard.putNumber("Left Motor Speed", leftMotor.get());
-					SmartDashboard.putNumber("Right Motor Speed", rightMotor.get());
-					SmartDashboard.putNumber("Average Encoder", aveEncoderPos);
-					SmartDashboard.putNumber("Left Encoder", -leftMotor.getSelectedSensorPosition());
-					SmartDashboard.putNumber("Right Encoder", -rightMotor.getSelectedSensorPosition());
+					updateEncoders();
+					updateSmartDashboard();
 				}
 				m_myRobot.tankDrive(0.0, 0.0);
 				break;
 			case kDefaultAuto:
 			default:
 				// Drive forwards for two seconds
-				m_myRobot.tankDrive(-0.5, 0.0);
+				m_myRobot.tankDrive(-0.5, 0.5);
 				Timer.delay(2.0);
 
 				// Stop robot
@@ -142,6 +127,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopInit() {
 		encoderReset();
+		
 	}
 	
 	@Override
@@ -149,20 +135,31 @@ public class Robot extends IterativeRobot {
 		leftSpeed = -m_driver.getY();
 		rightSpeed = m_driver.getRawAxis(3);
 		
-		leftEncoderPos = -leftMotor.getSelectedSensorPosition();
-		rightEncoderPos = -rightMotor.getSelectedSensorPosition();
-		
 		m_myRobot.tankDrive(leftSpeed, rightSpeed);
 		
-		SmartDashboard.putNumber("Left Motor Speed", leftMotor.get());
-		SmartDashboard.putNumber("Right Motor Speed", rightMotor.get());
-		
-		SmartDashboard.putNumber("Left Encoder", leftEncoderPos);
-		SmartDashboard.putNumber("Right Encoder", rightEncoderPos);
+		updateEncoders();
+		updateSmartDashboard();
 	}
 	
 	public void encoderReset() {
 		leftMotor.setSelectedSensorPosition(0);
 		rightMotor.setSelectedSensorPosition(0);
+	}
+	
+	public int updateEncoders() {
+		leftEncoderPos = -leftMotor.getSelectedSensorPosition();
+		rightEncoderPos = -rightMotor.getSelectedSensorPosition();
+		aveEncoderPos = (leftEncoderPos + rightEncoderPos)/2;
+		return aveEncoderPos;
+	}
+	
+	public void updateSmartDashboard() {
+		SmartDashboard.putNumber("Left Motor Speed", leftMotor.get());
+		SmartDashboard.putNumber("Right Motor Speed", rightMotor.get());
+		
+		SmartDashboard.putNumber("Left Encoder", leftEncoderPos);
+		SmartDashboard.putNumber("Right Encoder", rightEncoderPos);
+		
+		SmartDashboard.putNumber("Average Encoder", aveEncoderPos);
 	}
 }
